@@ -1,0 +1,76 @@
+html {
+  font-size: 85%;
+   scroll-behavior: smooth;
+}
+body {
+  font-size: 1em; /* currently ems cause chrome bug misinterpreting rems on body element */
+  line-height: 1.6;
+  font-weight: 400;
+  font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+  /* color: rgb(50, 50, 50); */
+  color: #666666;
+  -ms-overflow-style: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.rc-slider-track {
+  background-color: #508caf;
+}
+
+.rc-slider-dot-active {
+  border-color: #508caf;
+  border: solid 2px #508caf;
+}
+
+.rc-slider-handle {
+  background-color: #508caf;
+  border-color: white;
+}
+
+.rc.slider-handle:hover {
+  border-color: #508caf;
+}
+
+.rc.slider-handle-active:active {
+  border-color: #508caf;
+}
+
+.custom-control-input:checked~.custom-control-label::before {
+    color: #fff;
+    border-color: #508caf;
+    background-color: #508caf;
+}
+
+.custom-select{
+    color: #508caf;
+}
+
+a {
+    color: #508caf;
+    text-decoration: none;
+    background-color: transparent;
+}
+
+a:hover {
+  color: #666666;
+}
+.material-icons.md-24 { font-size: 24px; }
+.material-icons.md-48 { font-size: 48px; }
+.material-icons.logoColor { color: #508caf; }
+
+blockquote {
+    margin-left: 20px;
+    padding-left: 5px;
+    border-left: 5px solid #eee
+
+}
+
+.shadow {
+  -webkit-box-shadow: 0px 8px 0px 0px black;  /* Safari 3-4, iOS 4.0.2 - 4.2, Android 2.3+ */
+  -moz-box-shadow:    0px 8px 0px 0px black;  /* Firefox 3.5 - 3.6 */
+  box-shadow:         0px 8px 0px 0px black;  /* Opera 10.5, IE 9, Firefox 4+, Chrome 6+, iOS 5 */
+}
