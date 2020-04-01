@@ -10,7 +10,6 @@ from datetime import timedelta
 from datetime import datetime
 import numpy as np
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from dash.exceptions import PreventUpdate
 
 
@@ -23,9 +22,10 @@ app = dash.Dash(__name__,
                            {'name': 'description','content': 'COVID-19 ANALTICAL APP'},
                            {'property':'og:title', 'content': 'COVID-19 CURVES'},
                            {'property':'og:type', 'content': 'website'},
-                           {'property':'og:url', 'content': 'https://covid19-curves.herokuapp.com/'},
-                           {'property': 'og:image',
+                           {'property':'og:url:', 'content': 'https://covid19-curves.herokuapp.com/'},
+                           {'property': 'og:image:secure_url',
                             'content':'https://github.com/chk2817/covid-19-curves/blob/master/assets/covid-curve-app.png'},
+                           {'property':'og:image:type:', 'content': 'image/png'},
                            {'http-equiv': 'X-UA-Compatible', 'content': 'IE=edge'},
                            {'name':"author", 'content':"Alban Tranchard"},
                            {'charset':"UTF-8"},
