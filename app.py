@@ -19,7 +19,8 @@ app = dash.Dash(__name__,
                                       'https://use.fontawesome.com/releases/v5.11.2/css/all.css',
                                       {'href':'https://fonts.googleapis.com/icon?family=Material+Icons',
                                        'rel':'stylesheet'}],
-                meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
+                meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1",
+                            'og:image':}],
 
                 )
 
