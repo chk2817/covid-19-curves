@@ -20,7 +20,7 @@ app = dash.Dash(__name__,
                                       {'href':'https://fonts.googleapis.com/icon?family=Material+Icons',
                                        'rel':'stylesheet'}],
                 meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1",
-                            'og:image':}],
+                            'og:image':'https://github.com/chk2817/covid-19-curves/blob/master/assets/covid-curve-app.png'}],
 
                 )
 
