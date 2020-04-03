@@ -764,6 +764,8 @@ progression_section=dbc.Container([
                                  multi=False,style={'fontSize':'100%'}, placeholder='Select Data', className='mb-4'),
                     dbc.Checklist(options=[{"label": "Per Capita", "value": True}],value=[True],
                           id="prog_dd_scale", switch=True, className='mb-4'),
+                    dbc.Checklist(options=[{"label": "Show Daily % Variance", "value": True}],value=[],id="prog_percent",
+                                  switch=True, className='mb-4'),
                     dcc.Dropdown(options=region_options, id='prog_dd_region',value=[],
                                  multi=True,style={'fontSize':'100%'}, placeholder='Select Region(s)', className='mb-4'),
                     dcc.Dropdown(options=subregion_options, id='prog_dd_subregion', value=[],
@@ -837,8 +839,8 @@ def toggle_modal(n1, n2, is_open):
                State('prog_dd_region','value'), State('prog_dd_subregion','value'),
                State('prog_dd_country','value'), State('prog_dd_area','value'),
                State('prog_logscale','value'),State('prog_dd_devtime','value'),
-               State('prog_toplimit','value')])
-def update_progression_plots(n,data,scale,region,subregion,country, area,logscale,devtime, top_limit):
+               State('prog_toplimit','value'), State('prog_percent','value')])
+def update_progression_plots(n,data,scale,region,subregion,country, area,logscale,devtime, top_limit,percent):
 
     #apply filter on df
     region_idx = []
@@ -870,16 +872,21 @@ def update_progression_plots(n,data,scale,region,subregion,country, area,logscal
         dff = dff[dff['country_area'].isin(top_split)]
 
 
+
     target_col = data
     if scale:
         target_col = data + '_rate'
 
     if devtime:
         x_col='devt_time'
-        dff1 = dff.loc[dff[x_col] >= 0, :].sort_values('date')
+        dff1 = dff.loc[dff[x_col] >= 0, :].sort_values(['country_area','devt_time'])
     else:
         x_col='date'
-        dff1=dff.sort_values('date')
+        dff1=dff.sort_values(['country_area','date'])
+
+    if percent:
+        dff1['percent']=dff1.groupby('country_area')[target_col].apply(pd.Series.pct_change)
+        target_col='percent'
 
     cat_orders={}
     dff_cat_order = dff.loc[dff['date'] == end_date, ['country_area', 'confirmed_cases', 'population']].groupby(
@@ -905,6 +912,9 @@ def update_progression_plots(n,data,scale,region,subregion,country, area,logscal
         hover_lbl='Active'
         cdata = ['active', 'active_rate','country_area','confirmed_cases']
 
+    if percent:
+        cdata.append('percent')
+
     fig = px.line(dff1, x=x_col, y=target_col, color='country_area', log_y=True if logscale else None,
                   category_orders=cat_orders, custom_data=cdata)
 
@@ -913,7 +923,8 @@ def update_progression_plots(n,data,scale,region,subregion,country, area,logscal
                       yaxis_title_text="", title_x=0.05, yaxis_gridcolor='#eee',  # , title_y=0.95
                       xaxis_title_text='Development Time (in days)' if devtime else '', showlegend=True, autosize=True,
                       legend_title="", legend_font_size=14, xaxis_showspikes=True,
-                      xaxis_spikethickness=2, yaxis_showspikes=True, yaxis_spikethickness=2
+                      xaxis_spikethickness=2, yaxis_showspikes=True, yaxis_spikethickness=2,
+                      yaxis_tickformat=".0%" if percent else "",
                       )  # , title_pad_b=20
 
     ht = '<b>%{customdata[2]}</b><br>'
@@ -922,6 +933,8 @@ def update_progression_plots(n,data,scale,region,subregion,country, area,logscal
     else:
         ht = ht + 'Date : %{x|%d %b}<br>'
     ht = ht + hover_lbl+ ' : %{customdata[0]:.3s}<br>'
+    if percent:
+        ht = ht +'<b>Daily change: %{customdata[4]:.1%}</b><br>'
     if data=='confirmed_cases':
         ht = ht + 'Population : %{customdata[3]:,.1f} mio<br>'
         ht = ht + 'Per mio capita : %{customdata[1]:,.0f}<extra></extra>'
