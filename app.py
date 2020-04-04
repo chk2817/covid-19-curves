@@ -450,7 +450,7 @@ def update_timeline_plots(n, show_increments, region, subregion, country, area, 
     cat_orders = {}
     if split:
         dff_agg = dff.loc[:, [split, 'date', 'confirmed_cases', 'deaths', 'recovered', 'active', 'population']].groupby(
-            [split, 'date']).sum().reset_index().sort_values(['region', 'date'])
+            [split, 'date']).sum().reset_index().sort_values([split, 'date'])
         if show_increments:
             dff_agg[['confirmed_cases_inc', 'deaths_inc', 'recovered_inc']] = dff_agg.groupby([split])[
                 ['confirmed_cases', 'deaths', 'recovered']].diff().fillna(0)
