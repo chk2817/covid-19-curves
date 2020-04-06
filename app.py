@@ -381,16 +381,6 @@ def open_toast(split, state):
     raise PreventUpdate
 
 
-# add extra condition to enable if filter data????
-# @app.callback([Output('extra_tab','disabled'),
-#                Output('tabs','active_tab')],
-#               [Input('timeline_split','value')])
-# def enable_extra_tab(split):
-#     if split:
-#         return False, dash.no_update
-#     else:
-#         return True, 'tab_timeline'
-
 @app.callback([Output('timeline_row', 'className'),
                Output('current_row', 'className')],
               [Input('tabs', 'active_tab')])
@@ -593,7 +583,9 @@ def update_timeline_plots(n, show_increments, region, subregion, country, area, 
         return fig, fig2, fig3, dash.no_update, dash.no_update, dash.no_update, fig_stack_1, fig_stack_2, True, 'tab_timeline', False
 
     # figures for details only available if split is given
-
+    dff_agg['case_capita'] = dff_agg['confirmed_cases'] / dff_agg['population']
+    dff_agg['deaths_rate'] = dff_agg['deaths'] / dff_agg['confirmed_cases']
+    dff_agg['rec_rate'] = dff_agg['recovered'] / dff_agg['confirmed_cases']
     dff_agg_current = dff_agg[dff_agg['date'] == end_date].copy(deep=True)
 
     dff_agg_current['split_cat'] = pd.Categorical(dff_agg_current[split],
