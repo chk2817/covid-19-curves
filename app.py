@@ -69,6 +69,13 @@ area_options = [{'label': x, 'value': x} for x in area]
 
 split_options = [{'label': k, 'value': v} for k, v in zip(['Region', 'Sub-Region', 'Country', 'Area'],
                                                           ['region', 'subregion', 'country', 'country_area'])]
+# load projections data
+proj_df = pd.read_csv(DATA_PATH.joinpath("data_predictions.csv"), low_memory=False)
+country_area=proj_df['country_area'].unique()
+country_area_options= [{'label': x, 'value': x} for x in country_area]
+
+model_df= pd.read_csv(DATA_PATH.joinpath("model_parameters.csv"), low_memory=False)
+model_factors=[{'label':x, 'value':x} for x in model_df['factors_label'].unique()]
 
 config = {'modeBarButtonsToRemove': ['pan2d', 'select2d', 'lasso2d', 'zoomOut2d', 'zoomIn2d', 'hoverClosestCartesian',
                                      'zoom2d', 'autoScale2d', 'hoverCompareCartesian', 'zoomInGeo', 'zoomOutGeo',
@@ -132,6 +139,7 @@ navbar_layout = dbc.Navbar([
             dbc.NavLink("MAP", href='#'),
             dbc.NavLink("TIMELINE", href='#timeline', external_link=True),
             dbc.NavLink("PROGRESSION", href='#progression', external_link=True),
+            dbc.NavLink("PROJECTIONS", href='#projection', external_link=True),
             dbc.NavLink("ABOUT", href='#about', external_link=True),
         ], no_gutters=True, className="ml-auto flex-nowrap mt-3 mt-md-0", align="center"),
         id="navbar-collapse", navbar=True),
@@ -918,7 +926,7 @@ progression_section = dbc.Container([
     ], style={'minHeight': '80vh'}),
 
     # bottom of screen
-    dbc.Row([], style={'minHeight': '15vh'}),
+    dbc.Row([], id='projection',style={'minHeight': '10vh'}),
 ], fluid=True, id='prog_section')
 
 
@@ -1141,11 +1149,376 @@ footer_section = dbc.Container([
 
 ], fluid=True, id='footer_section', className='border-top bg-white', style={'borderColor': '#666666'})
 
+md1_proj = '''  
+
+ The model approach is to estimate the daily development factors (i.e. successive increments) of the number of cases.  
+ 
+ It is one combined model fitted using a `weighted log-linear regression` based on the `development time` and `country-area` factors.  
+ 
+ The final model selection regroups the individual `country-area` into 9 country groups to avoid over-fitting data with less statistical relevance.  
+          
+ The model is only fitted to `country / areas` that have reached a development time greater than 0, i.e. where the rate 
+ of cases is at least 5 per mio capita.
+ 
+'''
+
+
+projection_section = dbc.Container([
+    dbc.Card([
+        dbc.CardHeader([
+            html.H4('PROJECTION MODEL', className='d-inline'),
+            dbc.Button(html.I('info', className='material-icons md-24 logoColor'), color='link', id='proj_info',
+                       className='float-right p-0'),
+            dbc.Modal([
+                dbc.ModalHeader("INFORMATION"),
+                dbc.ModalBody([
+                    html.H5('Projection Model', className='font-weight-bold mb-4'),
+                    dcc.Markdown(md1_proj),
+                    html.Br(),
+                    dbc.Row([
+                        dbc.Col(html.H5('Fitted Development Factors', className='font-weight-bold'),className='col-12 col-md-6'),
+                        dbc.Col(
+                            dcc.Dropdown(options=country_area_options, id='model_dd', value='Italy',
+                                        multi=False, style={'fontSize': '100%'}, clearable=False),
+                        className='col-12 col-md-6')
+                    ], align='center'),
+                    dcc.Graph(id='model_fit_curve', config=config, style={'height': '50vh'}),
+                    dbc.Row([
+                        dbc.Col(html.H5('Model Parameters', className='font-weight-bold'),className='col-12 col-md-6'),
+                        dbc.Col(
+                            dcc.Dropdown(options=model_factors,
+                                         id='factors_dd', value=model_factors[0]['value'],multi=False, style={'fontSize': '100%'}, clearable=False),
+                        className='col-12 col-md-6')
+                    ], align='center'),
+                    dcc.Graph(id='model_parameters', config=config, style={'height': '50vh'}),
+                    dbc.Row([
+                        dbc.Col(html.H5('Model Residuals', className='font-weight-bold'),className='col-12 col-md-6'),
+                        dbc.Col(
+                            dcc.Dropdown(options=[{'label':'Devt Time', 'value':'devt_time'},{'label':'Country Groups', 'value':'country group'}],
+                                         id='residuals_dd', value='devt_time',multi=False, style={'fontSize': '100%'}, clearable=False),
+                        className='col-12 col-md-6')
+                    ], align='center'),
+                    dcc.Graph(id='model_residuals', config=config, style={'height': '50vh'}),
+                ]),
+                dbc.ModalFooter(dbc.Button("Close", id="proj_close", className="ml-auto")),
+            ], id="proj_modal", size='xl', scrollable=True, style={'minHeight': '70vh'})
+        ]),
+
+        dbc.CardBody([
+            dbc.Row([
+                dbc.Col([
+                    dbc.Label('Region', html_for='proj_dd_region'),
+                    dcc.Dropdown(options=region_options, id='proj_dd_region', value=[],
+                                 multi=True, style={'fontSize': '100%'}, placeholder='Optional Region'),
+                ], className='col-12 col-md-6 col-xl-3'),
+                dbc.Col([
+                    dbc.Label('Sub-Region', html_for='proj_dd_subregion'),
+                    dcc.Dropdown(options=subregion_options, id='proj_dd_subregion', value=[],
+                                 multi=True, style={'fontSize': '100%'}, placeholder='Optional Sub-Region'),
+                ], className='col-12 col-md-6 col-xl-3'),
+                dbc.Col([
+                    dbc.Label('Country', html_for='proj_dd_country'),
+                    dcc.Dropdown(options=country_options, id='proj_dd_country', value=[],
+                                 multi=True, style={'fontSize': '100%'}, placeholder='Optional Country'),
+                ], className='col-12 col-md-6 col-xl-3'),
+                dbc.Col([
+                    dbc.Label('Area', html_for='proj_dd_area'),
+                    dcc.Dropdown(options=area_options, id='proj_dd_area', value=[],
+                                 multi=True, style={'fontSize': '100%'}, placeholder='Optional Country Area'),
+                ], className='col-12 col-md-6 col-xl-3'),
+                html.Div(id='proj_first_time', children=True, style={'display': 'none'}),
+            ], className='mb-4'),
+
+            dbc.Row([
+                dbc.Col([
+                    dcc.Dropdown(options=split_options, id='proj_split',
+                                 multi=False, style={'fontSize': '100%'},
+                                 placeholder='Optional Split by')
+                ], className='col-12 col-md-6 col-xl-3 mb-4'),
+                dbc.Col([
+                    dbc.Row([
+                        dbc.Label('Limit Split to Top:', width=6, className='text-right pr-0'),
+                        dbc.Col(dbc.Input(type="number", min=1, step=1, value='12', id='proj_top_limit'), width=6)
+                    ], id='proj_row_limit', className='d_none'),
+                ], className='col-12 col-md-6 col-xl-3 mb-4'),
+                dbc.Col([
+                    dbc.Button('Refresh', color='primary', id='proj_refresh', className='float-right',
+                               style={'width': '100px'})
+                ], className='col-12 col-md-12 col-xl-6 mb-4'),
+            ], className='mb-4'),
+            dbc.Row([
+                dbc.Col(
+                    dbc.Toast(
+                        'The tab "Split View" will be enabled upon refresh',
+                        id="proj_toast",
+                        header="Tooltip",
+                        is_open=False,
+                        dismissable=False,
+                        duration=3000,
+                        icon="primary",
+                        style={"position": "fixed", "top": 100, "right": 30, "width": 300, 'zIndex': 999},
+                    )
+                    , className='col-12')
+            ]),
+            dbc.Tabs([
+                dbc.Tab(label="Aggregated View", tab_id="tab_aggregated_view"),
+                dbc.Tab(label="Split View", tab_id="tab_split_view",
+                        id='proj_extra_tab', disabled=True),
+            ], id="proj_tabs", active_tab="tab_aggregated_view",
+            ),
+            dbc.Row([
+                dbc.Col(dbc.Spinner(
+                    dcc.Graph(id='proj_split_1', config=config, style={'height': '50vh'}), color='secondary', size='lg')
+                    , className='col-12 col-xl-6'),
+                dbc.Col(dbc.Spinner(
+                    dcc.Graph(id='proj_split_2', config=config, style={'height': '50vh'}), color='secondary', size='lg')
+                    , className='col-12 col-xl-6'),
+            ], id='proj_split_row', className='mt-4', style={'minHeight': '47vh'}),
+            dbc.Row([
+                dbc.Col([dbc.Spinner(dcc.Graph(id='proj_agg_1', config=config, style={'height': '50vh'}),
+                                     color='secondary', size='lg')], className='col-12 col-xl-6'),
+                dbc.Col([dbc.Spinner(dcc.Graph(id='proj_agg_2', config=config, style={'height': '50vh'}),
+                                     color='secondary', size='lg')], className='col-12 col-xl-6'),
+            ], id='proj_agg_row', className='mt-4 d-none', style={'minHeight': '47vh'}),
+        ]),
+    ], style={'minHeight': '80vh'}),
+
+    # bottom of screen
+    dbc.Row([], style={'minHeight': '15vh'}),
+], fluid=True, id='projection_section')
+
+@app.callback(Output('model_parameters','figure'),
+              [Input('factors_dd', 'value')])
+def update_fit_curve(factor):
+    plot_data = model_df.loc[(model_df['factors_label'] == factor)].sort_values(
+        'levels')
+    fig = px.line(plot_data, x='levels', y='coef', template='plotly_white',
+                  color_discrete_sequence=px.colors.qualitative.D3, title='Weighted Log-Linear Regression')
+    fig.add_scatter(x=plot_data['levels'], y=plot_data['ci_95_upper'], line_dash='dash', mode='lines',
+                    name='95% CI Upper Bound', marker_color=px.colors.qualitative.D3[1])
+    fig.add_scatter(x=plot_data['levels'], y=plot_data['ci_95_lower'], line_dash='dash', mode='lines',
+                    name='95% CI Lower Bound', marker_color=px.colors.qualitative.D3[1])
+    fig.update_layout(xaxis_title='Levels', yaxis_title='Parameters')
+    return fig
+
+@app.callback(Output('model_residuals','figure'),
+              [Input('residuals_dd', 'value')])
+def update_fit_curve(res_type):
+    plot_data = proj_df.loc[~proj_df['weighted_residuals'].isnull()].sort_values('country group')
+    color_split='country group' if res_type=='devt_time' else 'devt_time'
+    xaxistitle='Development Time' if res_type=='devt_time' else 'Country Groups'
+    fig = px.scatter(plot_data, x=res_type, y='weighted_residuals', hover_name='country_area',
+                     hover_data=['link_ratio', 'fitted link ratio'], template='plotly_white',
+                     color=color_split, color_discrete_sequence=px.colors.qualitative.D3,
+                     color_continuous_scale=px.colors.sequential.Viridis_r,
+                     title='Weighted Model Residuals')
+    fig.update_layout(yaxis_title='', xaxis_title=xaxistitle, showlegend=True)
+    return fig
+
+@app.callback(Output('model_fit_curve','figure'),
+              [Input('model_dd', 'value')])
+def update_fit_curve(country):
+    plot_data = proj_df.loc[(proj_df['country_area'] == country) & (proj_df['devt_time'] > 0)]
+    fig = px.line(plot_data, x='devt_time', y='link_ratio', template='plotly_white', title='Daily Cases Development Factor',
+                  color_discrete_sequence=px.colors.qualitative.D3)
+    fig.add_scatter(x=plot_data['devt_time'], y=plot_data['fitted link ratio'], line_dash='dash',
+                    marker_color=px.colors.qualitative.D3[1])
+    fig.update_layout(yaxis_title='Factor', xaxis_title='Development Time', showlegend=False)
+    return fig
+
+@app.callback(
+    Output("proj_modal", "is_open"),
+    [Input("proj_info", "n_clicks"), Input("proj_close", "n_clicks")],
+    [State("proj_modal", "is_open")],
+)
+def toggle_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
+
+@app.callback(Output('proj_row_limit', 'className'),
+              [Input('proj_split', 'value')])
+def update_display_row_limit(value):
+    return "" if value else 'd-none'
+
+@app.callback(Output("proj_toast", "is_open"),
+              [Input('proj_split', 'value')],
+              [State('proj_extra_tab', 'disabled')])
+def open_toast(split, state):
+    if split and state:
+        return True
+    raise PreventUpdate
+
+@app.callback([Output('proj_agg_row', 'className'),
+               Output('proj_split_row', 'className')],
+              [Input('proj_tabs', 'active_tab')])
+def update_timeline_view(sel_tab):
+    if sel_tab == 'tab_aggregated_view':
+        return 'mt-4', 'mt-4 d-none'
+    elif sel_tab == 'tab_split_view':
+        return 'mt-4 d-none', 'mt-4'
+
+@app.callback([Output('proj_agg_1', 'figure'),
+               Output('proj_agg_2', 'figure'),
+               Output('proj_split_1', 'figure'),
+               Output('proj_split_2', 'figure'),
+               Output('proj_extra_tab', 'disabled'),
+               Output('proj_tabs', 'active_tab'),
+               #Output('proj_first_time', 'children')
+               ],
+              [Input('proj_refresh', 'n_clicks')],
+              [State('proj_dd_region', 'value'), State('proj_dd_subregion', 'value'),
+               State('proj_dd_country', 'value'), State('proj_dd_area', 'value'),
+               State('proj_split', 'value'), State('proj_top_limit', 'value'),
+               State('proj_first_time', 'children')])
+def update_timeline_plots(n, region, subregion, country, area, split, top_limit, first_time):
+    # ctx = dash.callback_context
+    # if not ctx.triggered:
+    #     comp_id = 'no.one'
+    # else:
+    #     comp_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    # apply filter on df
+    region_idx = []
+    if region:
+        region_idx = proj_df[proj_df['region'].isin(region)].index.to_list()
+    subregion_idx = []
+    if subregion:
+        subregion_idx = proj_df[proj_df['subregion'].isin(subregion)].index.to_list()
+    country_idx = []
+    if country:
+        country_idx = proj_df[proj_df['country'].isin(country)].index.to_list()
+    area_idx = []
+    if area:
+        area_idx = proj_df[proj_df['country_area'].isin(area)].index.to_list()
+
+    idx = list(set().union(region_idx, subregion_idx, country_idx, area_idx))
+
+    if idx:
+        dff = proj_df.loc[idx, :].copy(deep=True)
+    else:
+        dff = proj_df.copy(deep=True)
+    # need to aggregate the dff
+
+    # first aggregated plot
+
+    dff_agg = dff.loc[:,['date','data','population','cases','cases_inc']].groupby(['date','data']).sum()\
+        .reset_index().sort_values(['date'])
+    dff_agg['cases_capita'] = dff_agg['cases'] / dff_agg['population']
+    dff_agg['cases_capita_inc'] = dff_agg['cases_inc'] / dff_agg['population']
+    dff_agg['cases_pct_chge'] = dff_agg['cases'].pct_change().fillna(0)
+
+    fig = px.bar(dff_agg, x='date', y='cases_inc', color_discrete_sequence=px.colors.qualitative.Dark24,
+                 custom_data=['cases','cases_capita'], color='data')
+    fig.update_layout(margin={"r": 0, "t": 50, "l": 20, "b": 10}, plot_bgcolor='white',
+                      title_text="Daily Confirmed Cases", title_font_size=20,
+                      yaxis_title_text="", title_x=0.05, yaxis_gridcolor='#eee',
+                      xaxis_title_text="", autosize=True,
+                      legend_x=0.05, legend_y=0.95, legend_title="", legend_bgcolor='rgba(255,255,255,0)')
+
+    ht = ''
+    ht = ht + '<b>%{x|%d %B}</b><br>'
+    ht = ht + 'Daily Cases : %{y:+.3s}<br><br>'
+    ht = ht + 'YTD Cases : %{customdata[0]:,.3s}<br>'
+    ht = ht + 'YTD per mio capita : %{customdata[1]:,.0f}<extra></extra>'
+    fig.for_each_trace(lambda trace: trace.update(hovertemplate=ht))
+
+    fig2 = px.line(dff_agg, x='date', y='cases', color_discrete_sequence=px.colors.qualitative.Dark24,
+                  custom_data=['cases_inc', 'cases_pct_chge'], color='data')
+    fig2.update_layout(margin={"r": 0, "t": 50, "l": 20, "b": 10}, plot_bgcolor='white',
+                      title_text="Cumulative Confirmed Cases", title_font_size=20,
+                      yaxis_title_text="", title_x=0.05, yaxis_gridcolor='#eee',
+                      xaxis_title_text="", autosize=True,
+                      legend_x=0.05, legend_y=0.95, legend_title="", legend_bgcolor='rgba(255,255,255,0)')
+    ht = ''
+    ht = ht + '<b>%{x|%d %B}</b><br>'
+    ht = ht + 'Cumulative Cases : %{y:.3s}<br><br>'
+    ht = ht + 'Day Increment : %{customdata[0]:+,.3s}<br>'
+    ht = ht + 'Day % Change : %{customdata[1]:+.1%}<extra></extra>'
+
+    fig2.for_each_trace(lambda trace: trace.update(hovertemplate=ht))
+
+    # split charts
+
+    if split:
+        dff_agg = dff.loc[:, [split,'date', 'devt_time','data', 'population', 'cases', 'cases_inc']].groupby([split,'date']).sum() \
+            .reset_index().sort_values(by=[split,'date'], ascending=True)
+        dff_agg['cases_capita'] = dff_agg['cases'] / dff_agg['population']
+        dff_agg['cases_capita_inc'] = dff_agg['cases_inc'] / dff_agg['population']
+        dff_agg['cases_pct_chge'] = dff_agg.groupby(split)['cases'].pct_change().fillna(0)
+
+        df_combined=dff.loc[:, [split,'data', 'cases','date','population']].groupby([split,'data','date']).sum() \
+            .reset_index().sort_values(by=[split,'date'], ascending=True)
+        df_combined=df_combined.groupby([split,'data']).max().reset_index().sort_values([split,'cases'], ascending=True)
+        df_combined['cases_diff'] = df_combined.groupby(split)['cases'].diff().fillna(0)
+        df_combined.loc[df_combined['data'] == 'Estimate', 'cases'] = df_combined.loc[df_combined['data'] == 'Estimate', 'cases_diff']
+        df_combined.drop(columns='cases_diff', inplace=True)
+        totals = pd.Series(df_combined.groupby([split])['cases'].sum(), name='totals')
+        df_combined = df_combined.merge(totals, left_on=split, right_index=True)
+
+        if top_limit:
+            limit = max(1, int(top_limit))
+            top_split=(dff_agg.groupby(split).max().reset_index()).nlargest(limit,['cases'])[split].tolist()
+
+            dff_agg_split = dff_agg[dff_agg[split].isin(top_split)]
+            dff_agg_rest = dff_agg[~dff_agg[split].isin(top_split)].groupby(['date']).sum().reset_index()
+            dff_agg_rest[split] = 'Rest'
+            dff_agg = dff_agg_split.append(dff_agg_rest)
+            dff_agg['cases_pct_chge'] = dff_agg.groupby(split)['cases'].pct_change().fillna(0)
+
+            df_combined_split=df_combined[df_combined[split].isin(top_split)]
+            df_combined_rest=df_combined[~df_combined[split].isin(top_split)].groupby(['data']).sum().reset_index()
+            df_combined_rest[split] = 'Rest'
+            df_combined=df_combined_split.append(df_combined_rest)
+
+
+        fig3 = px.line(dff_agg, x='date', y='cases', color=split,
+                       color_discrete_sequence=px.colors.qualitative.Dark24,
+                       custom_data=['cases_inc', 'cases_pct_chge', split], log_y=False)
+        fig3.update_layout(margin={"r": 0, "t": 50, "l": 20, "b": 10}, plot_bgcolor='white',
+                           title_text="Cumulative Confirmed Cases", title_font_size=20,
+                           yaxis_title_text="", title_x=0.05, yaxis_gridcolor='#eee',
+                           xaxis_title_text="", autosize=True,
+                           legend_title="", legend_bgcolor='rgba(255,255,255,0)') #legend_x=0.05, legend_y=0.95,
+        ht = ''
+        ht = ht + '<b>%{customdata[2]} - </b>'
+        ht = ht + '<b>%{x|%d %B}</b><br>'
+        ht = ht + 'Cumulative Cases : %{y:.3s}<br><br>'
+        ht = ht + 'Day Increment : %{customdata[0]:+,.3s}<br>'
+        ht = ht + 'Day % Change : %{customdata[1]:+.1%}<extra></extra>'
+        fig3.for_each_trace(lambda trace: trace.update(hovertemplate=ht))
+
+
+        df_combined.sort_values(['totals','data'], ascending=[True,False], inplace=True)
+        df_combined['total_perc']=df_combined['totals']/totals.sum()
+
+        fig4 = px.bar(df_combined, x='cases', y=split, color='data', custom_data=['data','totals','total_perc'],
+                      color_discrete_sequence=px.colors.qualitative.Dark24, orientation='h')
+        fig4.update_layout(margin={"r": 0, "t": 50, "l": 20, "b": 10}, plot_bgcolor='white',
+                           title_text="Confirmed Cases Split", title_font_size=20,
+                           yaxis_title_text="", title_x=0.05, yaxis_gridcolor='#eee',
+                           xaxis_title_text="", autosize=True, showlegend=True,
+                           legend_title="", legend_bgcolor='rgba(255,255,255,0)')
+        ht = ''
+        ht = ht + '<b>%{y} - </b>'
+        ht = ht + '<b>%{customdata[0]}</b><br><br>'
+        ht = ht + 'Cases : %{x:.3s}<br>'
+        ht = ht + 'Total Cases : %{customdata[1]:.3s}<br>'
+        ht = ht + '% of Total : %{customdata[2]:.0%}<extra></extra>'
+        fig4.for_each_trace(lambda trace: trace.update(hovertemplate=ht))
+
+        return fig, fig2, fig3, fig4,  False, dash.no_update
+
+    else:
+        return fig, fig2, dash.no_update, dash.no_update, True, 'tab_aggregated_view'
+
+
 app.layout = html.Div([
     navbar_layout,
     map_section,
     timeline_section,
     progression_section,
+    projection_section,
     footer_section
 ]
 )
