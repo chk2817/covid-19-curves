@@ -1280,6 +1280,17 @@ projection_section = dbc.Container([
                 dbc.Col([dbc.Spinner(dcc.Graph(id='proj_agg_2', config=config, style={'height': '50vh'}),
                                      color='secondary', size='lg')], className='col-12 col-xl-6'),
             ], id='proj_agg_row', className='mt-4 d-none', style={'minHeight': '47vh'}),
+            dbc.Row([
+                dbc.Col([
+                    html.Span("Documentation about the underlying projection model can be read here: "),
+                    html.A('COVID-19 Projection Model', href='https://medium.com/@alban.tranchard/covid-19-cases-projections-4d09fe655303?source=friends_link&sk=a9506c925ca80fbd51a95727c8b7a741',
+                        target='_blank'),
+                    html.P(' '),
+                    html.Span('The companion python Jupyter notebook is available here: '),
+                    html.A('Github Repository', href='https://github.com/chk2817/COVID-19-Jupyter',
+                        target='_blank'),
+                ],className='ml-4'),
+            ],className='mt-4'),
         ]),
     ], style={'minHeight': '80vh'}),
 
