@@ -51,7 +51,7 @@ end_date = df['date'].max()
 no_days = (end_date - begin_date).days
 df['Timeline'] = df['date'].dt.strftime('%b %d')
 
-seq = [0, 9, 23, 38, 52, 69, 83, 99]
+seq = [0, 9, 23, 38, 52, 69, 83, 99,113,130,144,160,174,191, 205, 222,236,252,266]
 
 slider_marks = {i: (begin_date + timedelta(days=i)).strftime('%b')
 if ((begin_date + timedelta(days=i)).day == 1 or i == 0) else (begin_date + timedelta(days=i)).strftime('%d')
